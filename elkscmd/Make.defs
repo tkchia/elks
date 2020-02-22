@@ -52,7 +52,7 @@ PLATFORM=i86-ELKS
 ELKS_DIR=$(TOPDIR)/elks
 ELKSCMD_DIR=$(TOPDIR)/elkscmd
 
-INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(ELKS_DIR)/include
+INCLUDES=-I$(TOPDIR)/libc/include
 
 ##############################################################################
 #

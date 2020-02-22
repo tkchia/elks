@@ -10,8 +10,8 @@ typedef unsigned char __u8;
 typedef unsigned char * __pu8;
 
 #ifndef __BCC__		/* NOTE! BCC does _not_ have a signed char type! */
-typedef char __s8;
-typedef char * __ps8;
+typedef signed char __s8;
+typedef signed char * __ps8;
 #endif
 
 typedef unsigned short __u16;

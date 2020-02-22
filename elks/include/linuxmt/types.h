@@ -21,6 +21,7 @@ typedef __u32			block32_t;
 typedef __u16			dev_t;
 typedef __u16			flag_t;
 typedef __u16			gid_t;
+typedef __u32			u_ino_t;
 #ifdef CONFIG_32BIT_INODES
 typedef __u32			ino_t;
 #else

@@ -1,14 +1,14 @@
-#ifndef LX86_ARCH_STAT_H
-#define LX86_ARCH_STAT_H
+#ifndef __ARCH_8086_STAT_H
+#define __ARCH_8086_STAT_H
 
 #include <linuxmt/types.h>
 
 struct stat {
     dev_t	st_dev;
-#ifdef CONFIG_32BIT_INODES
-    __u16	st_ino;
-#else
+#ifndef __KERNEL__
     ino_t	st_ino;
+#else
+    u_ino_t	st_ino;
 #endif
     mode_t	st_mode;
     nlink_t	st_nlink;

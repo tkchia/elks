@@ -32,6 +32,31 @@ SUBDIRS = \
 
 .PHONY: all $(SUBDIRS)
 
+# Stuff for handling headers which are shared between kernel code and
+# userland code.
+#
+# A quick-and-easy way to share them is to add an `-I$(ELKS_DIR)/include'
+# option, but this risks pulling a lot of kernel-internal definitions into
+# userland.
+#
+# Instead, I opt to explicitly specify which kernel include files are also to
+# be used for userland code, and arrange to copy them here.
+#	-- tkchia
+INTERFACE_HEADERS=linuxmt/fcntl.h \
+		  linuxmt/ioctl.h arch/ioctl.h \
+		  linuxmt/stat.h arch/stat.h \
+		  linuxmt/termios.h
+
+$(INTERFACE_HEADERS:%=include/%) : include/%: $(ELKS_DIR)/include/%
+	$(RM) $@
+	set -e; \
+	if ln -s $< $@; then \
+		:; \
+	else \
+		cp $< $@.tmp; \
+		mv $@.tmp $@; \
+	fi
+
 # Stuff for handling multilibs (https://wiki.gentoo.org/wiki/Multilib),
 # which ia16-elf-gcc uses to support separate library files for multiple ABIs
 # for the same architecture and OS.
@@ -139,21 +164,19 @@ ifneq "" "$(DESTDIR)"
 INSTALL_DATA = install -c -m 644
 MULTIINCDIR = $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/include
 .PHONY: install
-install: $(LIBC)
+install: $(LIBC) $(INTERFACE_HEADERS:%=include/%)
 	mkdir -p $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR) \
 		 $(MULTIINCDIR)/asm $(MULTIINCDIR)/sys \
 		 $(MULTIINCDIR)/arch $(MULTIINCDIR)/linuxmt/arpa
 	$(INSTALL_DATA) $(LIBC) $(CRT0) \
 	    $(TOPDIR)/elks/elks-small.ld $(TOPDIR)/elks/elks-tiny.ld \
 	    $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)
-	$(INSTALL_DATA) include/*.h $(TOPDIR)/include/autoconf.h $(MULTIINCDIR)
+	$(INSTALL_DATA) include/*.h $(MULTIINCDIR)
 	$(INSTALL_DATA) include/asm/*.h $(MULTIINCDIR)/asm
 	$(INSTALL_DATA) include/sys/*.h $(MULTIINCDIR)/sys
-	$(INSTALL_DATA) $(TOPDIR)/elks/include/arch/*.h $(MULTIINCDIR)/arch
-	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/*.h \
-	    $(MULTIINCDIR)/linuxmt
-	$(INSTALL_DATA) $(TOPDIR)/elks/include/linuxmt/arpa/*.h \
-	    $(MULTIINCDIR)/linuxmt/arpa
+	$(INSTALL_DATA) include/arch/*.h $(MULTIINCDIR)/asm
+	$(INSTALL_DATA) include/linuxmt/*.h $(MULTIINCDIR)/linuxmt
+	$(INSTALL_DATA) include/linuxmt/arpa/*.h $(MULTIINCDIR)/linuxmt/arpa
 uninstall:
 	$(RM) $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(LIBC)) \
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/$(notdir $(CRT0)) \
@@ -161,11 +184,9 @@ uninstall:
 	      $(DESTDIR)/ia16-elf/lib/$(MULTISUBDIR)/elks-tiny.ld \
 	      $(MULTIINCDIR)/autoconf.h \
 	      $(patsubst include/%,$(MULTIINCDIR)/%, \
-		  $(wildcard include/*.h include/asm/*.h include/sys/*.h)) \
-	      $(patsubst $(TOPDIR)/elks/include/%,$(MULTIINCDIR)/%, \
-		  $(wildcard $(TOPDIR)/elks/include/arch/*.h \
-			     $(TOPDIR)/elks/include/linuxmt/*.h \
-			     $(TOPDIR)/elks/include/linuxmt/arpa/*.h))
+		  $(wildcard include/*.h include/asm/*.h include/sys/*.h \
+			     include/arch/*.h include/linuxmt/*.h \
+			     include/linuxmt/arpa/*.h))
 endif
 
 else
@@ -176,7 +197,7 @@ all: $(LIBC)
 
 .PHONY: $(LIBC)
 
-$(LIBC):
+$(LIBC): $(INTERFACE_HEADERS:%=include/%)
 	set -e \
 	$(foreach ml,$(BUILDMULTIS), ; \
 		export MULTISUBDIR='$(firstword $(subst ;, ,$(ml)))'; \
@@ -219,4 +240,4 @@ endif
 
 clean:
 	for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean || exit 1; done
-	rm -rf build-ml *.o libc.a
+	rm -rf $(INTERFACE_HEADERS:%=include/%) build-ml *.o libc.a

@@ -1,7 +1,7 @@
 
 VERSION=elks-0.3.0
 
-INCLUDES=-I$(TOPDIR)/include -I$(TOPDIR)/libc/include -I$(TOPDIR)/elks/include
+INCLUDES=-I$(TOPDIR)/libc/include
 DEFINES=-D__LIBC__ -D__LIBC_VER__='"$(VERSION)"' -D__HAS_NO_FLOATS__
 
 SDEFS=$(DEFINES)
@@ -28,6 +28,7 @@ else
 LIBC=$(TOPDIR)/libc/libc.a
 CRT0=$(TOPDIR)/libc/crt0.o
 endif
+ELKS_DIR=$(TOPDIR)/elks
 LIB_CPU=i86
 LIB_OS=ELKS
 
