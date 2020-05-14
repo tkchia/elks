@@ -12,7 +12,8 @@ SECTIONS {
 		LONG (0);        /* .data section size */
 		LONG (0);        /* .bss section size */
 		LONG (_start);    /* entry point */
-		LONG (_total_adjusted); /* total memory allocated */
+		SHORT (_total_adjusted); /* total memory allocated */
+		SHORT (_stack_adjusted); /* stack size */
 		LONG (0);        /* symbol table size */
 		}
 	_begintext = ALIGN(0x20);
@@ -23,7 +24,12 @@ SECTIONS {
 		    "Error: too large for a tiny-model ELKS a.out file.");
 	}
 	PROVIDE (_start = entry); /* `entry' was the old entry point symbol */
-	PROVIDE (_chmem = 0);
+	PROVIDE (_stack = 0);
+	PROVIDE (_heap = 0);
+	PROVIDE (_stack_adjusted = _stack == 0 ? 0
+				   : MIN (0xfff0 - ., _stack));
+	PROVIDE (_chmem = _stack_adjusted == 0 || _heap == 0 ? 0
+			  : _stack_adjusted + _heap);
 	PROVIDE (_total = _chmem == 0 ? 0 : . + _chmem);
 	_total_adjusted = _total == 0 ? 0
 			  : MIN (0xfff0, MAX (. + 0x100, _total));
